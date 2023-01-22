@@ -1,0 +1,49 @@
+\section{Introduction}
+
+The project consists in the implementation and testing from scratch of a framework for building Artificial Neural Networks with backpropagation algorithm for both classification and regression problems, providing the essential building blocks for defining the structure of a network, loss functions, optimizers, metrics to monitor performances and callbacks. Our objective was to find the best model for both MONK \cite{Thrun1991TheMP} and ML-CUP22 tasks by using 3-fold validation technique with several first coarse-grained Grid Searches to figure out good intervals for hyperparameters, followed by a finer-grained Grid Search on these intervals with 4-fold cross validation. The most performing model after this search is then used to predict outputs for the blind test set.
+
+For installation and usage see the file \texttt{README.md} in the project package.
+
+\section{Method}
+
+\subsection{Code}
+
+The framework has been implemented in Python using \texttt{numpy} (https://numpy.org/) for the computational part, some minor utilities from \texttt{sklearn} and \texttt{pandas} and the \texttt{pickle} library for serialization; \texttt{tensorflow} is used in several tests for comparing our results with an industry-standard tool.
+Finally, the \texttt{typer} (https://typer.tiangolo.com/) library is used to build a command-line interface.
+For our implementation, we took inspiration from both \texttt{Tensorflow} and \texttt{PyTorch} frameworks, and in particular from \texttt{keras} API for its clarity, modularity, ease of use and for faster prototyping and comparisons (https://keras.io/api/).
+
+\paragraph{}
+
+Implementation is contained in the \texttt{core} package. Neural networks are implemented by the \texttt{Model} class, which contains a sequence of \texttt{Layer} objects and exposes the \texttt{compile()}, \texttt{train()} and \texttt{predict()} methods. The \texttt{Layer} class is specialized by \texttt{Dense}, \texttt{Linear} and activation layers. The \texttt{Dense} class implements a fully-connected layer, while \texttt{Linear} implements a fully-connected layer with identity as (implicit) activation.
+The optimizer provided is the standard \texttt{SGD} with momentum, while \texttt{L1}, \texttt{L2} and \texttt{L1L2} techniques are available for regularization. Provided losses are \texttt{MSE} and \texttt{Cross Entropy}. Training can be done either in batch, online or minibatch mode by using the \texttt{DataLoader} class. Weights initialization is available with Normal and Uniform distribution. Provided activation functions are \texttt{tanh}, \texttt{sigmoid}, \texttt{relu}, \texttt{softmax}.
+
+\paragraph{}
+
+The framework provides a system of metrics and callbacks for customizing behaviour: in particular, metrics shall be provided when calling \texttt{compile()}, while callbacks can implement a series of methods that are called before and after each training epoch/batch and each validation step. Examples of callbacks include \texttt{EarlyStopping} and loggers, while available metrics are \texttt{Mean Squared Error}, \texttt{Mean Absolute Error}, \texttt{Mean Euclidean Error}, \texttt{Root MSE}, \texttt{Binary} and \texttt{Categorical Accuracy}.
+
+\paragraph{}
+
+Finally, the base classes \texttt{BaseSearch} and \texttt{Validator} define the base structure for search strategies and validation techniques and are sub-classed by \texttt{GridSearch}, \texttt{Holdout} and \texttt{KFold}. Search can be done in parallel by using up to all the available cores.
+
+\subsection{Validation Schema}
+At first, we divided the whole CUP dataset into a \textbf{Development Set ($90\%$)} and an \textbf{Internal Test Set ($10\%$)} to be used for testing the final model. We conducted some preliminary trials with several architectures and hyperparameters for excluding irrelevant and under-performing ones.
+
+After that, we performed several exhaustive \textbf{coarse-grained Grid Searches} with large steps and \textbf{3-fold cross validation} technique for finding good intervals for the hyperparameters through observation of the average performance of each one in this first Grid Search.
+In particular, we first ranked all the configurations according to their average validation MEE over all the folds and then we calculated a score for each hyperparameter as an heuristic for choosing which intervals to consider.
+
+After that, we performed an exhaustive \textbf{finer-grained Grid Search} on the selected intervals or values with a \textbf{4-fold cross validation technique} and we ranked the configurations accordingly to their average Validation MEE over all the folds.
+
+Finally, we selected the best model as our final model, trained it on the whole development set and used it for predicting outputs for the blind test set.
+
+\subsection{Preliminary Trials}
+\label{subsection:preliminary_trials}
+Monks started working with $100\%$ accuracy immediately after adopting one-hot encoding for representing the inputs, we had just to pay some attention to regularization for the third dataset.
+
+For CUP dataset, instead, we needed to perform several preliminary trials to figure out the best intervals for the hyperparameters and for discarding under-performing values. We tested several orders of magnitude for initial learning rates, learning rate decay, weights initialization, (mini)batch size and maximum number of epochs. The results are later explained in the Experiments section.
+
+% TODO: Fare i test (con grafici!) su 3-fold cv per essere consistenti!
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "report"
+%%% End:
